@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -30,15 +31,46 @@ class _InputScreenState extends State<InputScreen> {
   final TextEditingController _etanolController = TextEditingController();
   final TextEditingController _gasolineController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    _loadLastValues();
+  }
+
+  Future<void> _loadLastValues() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _etanolController.text = prefs.getString('etanol') ?? '';
+      _gasolineController.text = prefs.getString('gasoline') ?? '';
+    });
+  }
+
+  Future<void> _saveValues() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('etanol', _etanolController.text);
+    await prefs.setString('gasoline', _gasolineController.text);
+  }
+
   void _calculate() {
     final double etanol = double.tryParse(_etanolController.text) ?? 0.0;
     final double gasoline = double.tryParse(_gasolineController.text) ?? 0.0;
     final double result = etanol * gasoline;
 
+    _saveValues();
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ResultScreen(result: result),
+      ),
+    );
+  }
+
+  void _showLastValues() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const LastValuesScreen(),
       ),
     );
   }
@@ -72,6 +104,11 @@ class _InputScreenState extends State<InputScreen> {
               onPressed: _calculate,
               child: const Text('Calculate'),
             ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _showLastValues,
+              child: const Text('Consumo Anterior'),
+            ),
           ],
         ),
       ),
@@ -104,6 +141,55 @@ class ResultScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class LastValuesScreen extends StatelessWidget {
+  const LastValuesScreen({super.key});
+
+  Future<Map<String, String>> _getLastValues() async {
+    final prefs = await SharedPreferences.getInstance();
+    return {
+      'etanol': prefs.getString('etanol') ?? '',
+      'gasoline': prefs.getString('gasoline') ?? '',
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Last Values'),
+      ),
+      body: FutureBuilder<Map<String, String>>(
+        future: _getLastValues(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return const Center(child: Text('Error loading last values'));
+          } else {
+            final lastValues = snapshot.data!;
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Etanol Consumption: ${lastValues['etanol']}'),
+                  Text('Gasoline Consumption: ${lastValues['gasoline']}'),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Back'),
+                  ),
+                ],
+              ),
+            );
+          }
+        },
       ),
     );
   }
