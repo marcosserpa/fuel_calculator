@@ -28,6 +28,98 @@ class InputScreen extends StatefulWidget {
 }
 
 class _InputScreenState extends State<InputScreen> {
+  Future<void> _calculate() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? etanolStr = prefs.getString('etanol');
+    final String? gasolineStr = prefs.getString('gasoline');
+
+    if (etanolStr == null || gasolineStr == null || etanolStr.isEmpty || gasolineStr.isEmpty) {
+      _showAlert('Please enter Etanol and Gasoline values through the "Consumo" button.');
+      return;
+    }
+
+    final double etanol = double.tryParse(etanolStr) ?? 0.0;
+    final double gasoline = double.tryParse(gasolineStr) ?? 0.0;
+
+    if (etanol == 0.0 || gasoline == 0.0) {
+      _showAlert('Etanol and Gasoline values must be greater than 0.');
+      return;
+    }
+
+    final double result = etanol * gasoline;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ResultScreen(result: result),
+      ),
+    );
+  }
+
+  void _showAlert(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Invalid Input'),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showConsumoScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ConsumoScreen(),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Fuel Consumption Calculator'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _calculate,
+              child: const Text('Calculate'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _showConsumoScreen,
+              child: const Text('Consumo'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ConsumoScreen extends StatefulWidget {
+  const ConsumoScreen({super.key});
+
+  @override
+  _ConsumoScreenState createState() => _ConsumoScreenState();
+}
+
+class _ConsumoScreenState extends State<ConsumoScreen> {
   final TextEditingController _etanolController = TextEditingController();
   final TextEditingController _gasolineController = TextEditingController();
 
@@ -46,32 +138,46 @@ class _InputScreenState extends State<InputScreen> {
   }
 
   Future<void> _saveValues() async {
+    final String etanolStr = _etanolController.text;
+    final String gasolineStr = _gasolineController.text;
+
+    if (etanolStr.isEmpty || gasolineStr.isEmpty) {
+      _showAlert('Etanol and Gasoline values cannot be empty.');
+      return;
+    }
+
+    final double etanol = double.tryParse(etanolStr) ?? 0.0;
+    final double gasoline = double.tryParse(gasolineStr) ?? 0.0;
+
+    if (etanol == 0.0 || gasoline == 0.0) {
+      _showAlert('Etanol and Gasoline values must be greater than 0.');
+      return;
+    }
+
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('etanol', _etanolController.text);
-    await prefs.setString('gasoline', _gasolineController.text);
+    await prefs.setString('etanol', etanolStr);
+    await prefs.setString('gasoline', gasolineStr);
+
+    Navigator.pop(context);
   }
 
-  void _calculate() {
-    final double etanol = double.tryParse(_etanolController.text) ?? 0.0;
-    final double gasoline = double.tryParse(_gasolineController.text) ?? 0.0;
-    final double result = etanol * gasoline;
-
-    _saveValues();
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ResultScreen(result: result),
-      ),
-    );
-  }
-
-  void _showLastValues() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const LastValuesScreen(),
-      ),
+  void _showAlert(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Invalid Input'),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -79,7 +185,7 @@ class _InputScreenState extends State<InputScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Fuel Consumption Calculator'),
+        title: const Text('Consumo'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -101,13 +207,8 @@ class _InputScreenState extends State<InputScreen> {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _calculate,
-              child: const Text('Calculate'),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _showLastValues,
-              child: const Text('Consumo Anterior'),
+              onPressed: _saveValues,
+              child: const Text('Save'),
             ),
           ],
         ),
@@ -141,55 +242,6 @@ class ResultScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class LastValuesScreen extends StatelessWidget {
-  const LastValuesScreen({super.key});
-
-  Future<Map<String, String>> _getLastValues() async {
-    final prefs = await SharedPreferences.getInstance();
-    return {
-      'etanol': prefs.getString('etanol') ?? '',
-      'gasoline': prefs.getString('gasoline') ?? '',
-    };
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Last Values'),
-      ),
-      body: FutureBuilder<Map<String, String>>(
-        future: _getLastValues(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return const Center(child: Text('Error loading last values'));
-          } else {
-            final lastValues = snapshot.data!;
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Etanol Consumption: ${lastValues['etanol']}'),
-                  Text('Gasoline Consumption: ${lastValues['gasoline']}'),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Back'),
-                  ),
-                ],
-              ),
-            );
-          }
-        },
       ),
     );
   }
