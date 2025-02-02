@@ -12,7 +12,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Fuel Consumption Calculator',
+      title: 'Viabilidade de Combustível',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -31,6 +31,10 @@ class InputScreen extends StatefulWidget {
 class _InputScreenState extends State<InputScreen> {
   String? _defaultText;
   String? _resultText;
+  String? _etanolFormatted;
+  String? _gasolineFormatted;
+  String? _cheaperFuel;
+  String? _ratioFormatted;
 
   @override
   void initState() {
@@ -53,8 +57,12 @@ class _InputScreenState extends State<InputScreen> {
         final String cheaperFuel = isEtanolCheaper ? 'Etanol' : 'Gasolina';
 
         setState(() {
+          _etanolFormatted = formatNumber(etanol);
+          _gasolineFormatted = formatNumber(gasoline);
+          _cheaperFuel = cheaperFuel;
+          _ratioFormatted = formatNumber(ratio);
           _defaultText =
-              'Baseado na última vez que você atualizou o consumo com Etanol (${_formatText(formatNumber(etanol), Colors.red)}) e Gasolina (${_formatText(formatNumber(gasoline), Colors.red)}), é mais vantajoso abastecer com ${_formatText(cheaperFuel, Colors.green)} se o ${_formatText(cheaperFuel, Colors.green)} estiver abaixo de R\$ ${formatNumber(ratio)}.\n\nClique abaixo para calcular baseado no custo ${isEtanolCheaper ? 'do Etanol' : 'da Gasolina'}:';
+              'Baseado na última vez que você atualizou o consumo com Etanol (${_etanolFormatted}) Km/l e Gasolina (${_gasolineFormatted}) Km/l, é mais vantajoso abastecer com ${_cheaperFuel} se o ${_cheaperFuel} estiver abaixo de R\$ ${_ratioFormatted} o valor do litro.\n\nClique abaixo para calcular informando o custo ${isEtanolCheaper ? 'do Etanol' : 'da Gasolina'}:';
         });
       }
     }
@@ -77,7 +85,7 @@ class _InputScreenState extends State<InputScreen> {
     final String? gasolineStr = prefs.getString('gasoline');
 
     if (etanolStr == null || gasolineStr == null || etanolStr.isEmpty || gasolineStr.isEmpty) {
-      _showAlert('Please enter Etanol and Gasoline values through the "Consumo" button.');
+      _showAlert('Por favor insira os valores de Etanol e Gasolina através do botão "Consumo".');
       return;
     }
 
@@ -85,7 +93,7 @@ class _InputScreenState extends State<InputScreen> {
     final double gasoline = double.tryParse(gasolineStr.replaceAll(',', '.')) ?? 0.0;
 
     if (etanol == 0.0 || gasoline == 0.0) {
-      _showAlert('Etanol and Gasoline values must be greater than 0.');
+      _showAlert('Etanol e Gasolina devem ser maiores que 0.');
       return;
     }
 
@@ -109,7 +117,7 @@ class _InputScreenState extends State<InputScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Invalid Input'),
+          title: const Text('Valor Inválido'),
           content: Text(message),
           actions: <Widget>[
             TextButton(
@@ -139,7 +147,7 @@ class _InputScreenState extends State<InputScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Fuel Consumption Calculator'),
+        title: const Text('Calculadora de Combustível'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -157,17 +165,18 @@ class _InputScreenState extends State<InputScreen> {
                   style: const TextStyle(fontSize: 16, color: Colors.black),
                   children: [
                     TextSpan(text: 'Baseado na última vez que você atualizou o consumo com Etanol '),
-                    _formatText('etanol', Colors.red),
-                    TextSpan(text: ' e Gasolina '),
-                    _formatText('gasolina', Colors.red),
-                    TextSpan(text: ', é mais vantajoso abastecer com '),
-                    _formatText('cheaperFuel', Colors.green),
-                    TextSpan(text: ' se o '),
-                    _formatText('cheaperFuel', Colors.green),
+                    _formatText(_etanolFormatted!, Colors.red),
+                    TextSpan(text: ' Km/l e Gasolina '),
+                    _formatText(_gasolineFormatted!, Colors.red),
+                    TextSpan(text: ' Km/l, é mais vantajoso abastecer com '),
+                    _formatText(_cheaperFuel!, Colors.green),
+                    TextSpan(text: ' se o valor do(a) '),
+                    _formatText(_cheaperFuel!, Colors.green),
                     TextSpan(text: ' estiver abaixo de R\$ '),
-                    _formatText('ratio', Colors.black),
-                    TextSpan(text: '.\n\nClique abaixo para calcular baseado no custo '),
-                    TextSpan(text: 'isEtanolCheaper ? "do Etanol" : "da Gasolina"'),
+                    _formatText(_ratioFormatted!, Colors.black),
+                    TextSpan(text: ' o valor do litro'),
+                    TextSpan(text: '.\n\nClique abaixo para calcular informando o custo '),
+                    TextSpan(text: _cheaperFuel == 'Etanol' ? 'do Etanol' : 'da Gasolina'),
                     TextSpan(text: ':'),
                   ],
                 ),
@@ -176,7 +185,7 @@ class _InputScreenState extends State<InputScreen> {
             ],
             ElevatedButton(
               onPressed: _calculate,
-              child: const Text('Calculate'),
+              child: const Text('Calcular'),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
@@ -220,7 +229,7 @@ class _ConsumoScreenState extends State<ConsumoScreen> {
     final String gasolineStr = _gasolineController.text;
 
     if (etanolStr.isEmpty || gasolineStr.isEmpty) {
-      _showAlert('Etanol and Gasoline values cannot be empty.');
+      _showAlert('Etanol e Gasolina não podem ser vazios.');
       return;
     }
 
@@ -228,7 +237,7 @@ class _ConsumoScreenState extends State<ConsumoScreen> {
     final double gasoline = double.tryParse(gasolineStr.replaceAll(',', '.')) ?? 0.0;
 
     if (etanol == 0.0 || gasoline == 0.0) {
-      _showAlert('Etanol and Gasoline values must be greater than 0.');
+      _showAlert('Etanol e Gasolina devem ser maiores que 0.');
       return;
     }
 
@@ -244,7 +253,7 @@ class _ConsumoScreenState extends State<ConsumoScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Invalid Input'),
+          title: const Text('Valor Inválido'),
           content: Text(message),
           actions: <Widget>[
             TextButton(
@@ -272,21 +281,21 @@ class _ConsumoScreenState extends State<ConsumoScreen> {
             TextField(
               controller: _etanolController,
               decoration: const InputDecoration(
-                labelText: 'Etanol Consumption',
+                labelText: 'Consumo de Etanol em Km/l',
               ),
               keyboardType: TextInputType.numberWithOptions(decimal: true),
             ),
             TextField(
               controller: _gasolineController,
               decoration: const InputDecoration(
-                labelText: 'Gasoline Consumption',
+                labelText: 'Consumo de Gasolina em Km/l',
               ),
               keyboardType: TextInputType.numberWithOptions(decimal: true),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _saveValues,
-              child: const Text('Save'),
+              child: const Text('Salvar'),
             ),
           ],
         ),
@@ -308,16 +317,20 @@ class CalculateScreen extends StatefulWidget {
 class _CalculateScreenState extends State<CalculateScreen> {
   final MoneyMaskedTextController _fuelValueController = MoneyMaskedTextController(decimalSeparator: ',', thousandSeparator: '');
 
+  String get _fuelValueLabel {
+    return widget.gasoline > widget.etanol ? 'Valor do Litro da Gasolina' : 'Valor do Litro do Etanol';
+  }
+
   void _calculateCheaper() {
     final String fuelValueStr = _fuelValueController.text;
     if (fuelValueStr.isEmpty) {
-      _showAlert('Please enter a fuel value.');
+      _showAlert('Por favor insira um valor para o combustível.');
       return;
     }
 
     final double fuelValue = double.tryParse(fuelValueStr.replaceAll(',', '.')) ?? 0.0;
     if (fuelValue == 0.0) {
-      _showAlert('Fuel value must be greater than 0.');
+      _showAlert('O valor do combustível deve ser maior que 0.');
       return;
     }
 
@@ -340,7 +353,7 @@ class _CalculateScreenState extends State<CalculateScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Invalid Input'),
+          title: const Text('Valor Inválido'),
           content: Text(message),
           actions: <Widget>[
             TextButton(
@@ -359,7 +372,7 @@ class _CalculateScreenState extends State<CalculateScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Calculate Cheaper Fuel'),
+        title: const Text('Comparar Combustíveis'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -367,8 +380,8 @@ class _CalculateScreenState extends State<CalculateScreen> {
           children: [
             TextField(
               controller: _fuelValueController,
-              decoration: const InputDecoration(
-                labelText: 'Fuel Value',
+              decoration: InputDecoration(
+                labelText: _fuelValueLabel,
               ),
               keyboardType: TextInputType.numberWithOptions(decimal: true),
             ),
@@ -393,19 +406,19 @@ class ResultScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Result'),
+        title: const Text('Resultado'),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Result: ${formatNumber(result)}'),
+            Text('Resultado: ${formatNumber(result)}'),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('Back'),
+              child: const Text('Voltar'),
             ),
           ],
         ),
