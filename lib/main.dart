@@ -2,6 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_masked_text2/flutter_masked_text2.dart';
 
+// Reference calculation:
+// 100 km - 23L gasolina | 32L etanol
+
+// gasol: 100/22 = 4.54 km/l
+// etanl: 100/32 = 3.12 km/l
+
+
+// 3.12 / 4.54 = 0.687
+
+// gasolina: 6.43
+// etanol: 6.43 * 0.687 (< ou <=)? 4.41
+
+// GAS (13000KM) => 13000/4.54 => 2863.44 L => 2863.44 * 6.43 => 18.411,92
+// ETA (13000KM) => 13000/3.12 => 4166.67 L => 4166.67 * 4.41 => 18.375,01
+
+
+// GAS (1000KM) => 1000/4.54 => 220.26 L => 220.26 * 6.43 => 1.416,27
+// ETA (1000KM) => 1000/3.12 => 320.51 L => 320.51 * 4.41 => 1.413,44
+
+
+// GAS (450KM) => 450/4.54 => 99.12 L => 99.12 * 6.43 => 637.34
+// ETA (450KM) => 450/3.12 => 144.23 L => 144.23 * 4.41 => 636.05
+
+
+// GAS (87KM) => 87/4.54 => 19.16 L => 19.16 * 6.43 => 123.20
+// ETA (87KM) => 87/3.12 => 27.88 L => 27.88 * 4.41 => 122.95
+
+
 void main() {
   runApp(const MyApp());
 }
