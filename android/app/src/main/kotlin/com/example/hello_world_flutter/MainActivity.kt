@@ -1,4 +1,4 @@
-package com.example.hello_world_flutter
+package com.marcosserpa.fuel_calculator
 
 import io.flutter.embedding.android.FlutterActivity
 

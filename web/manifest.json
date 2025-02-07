@@ -1,6 +1,6 @@
 {
-    "name": "hello_world_flutter",
-    "short_name": "hello_world_flutter",
+    "name": "fuel_calculator",
+    "short_name": "fuel_calculator",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

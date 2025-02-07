@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "hello_world_flutter" "\0"
+            VALUE "CompanyName", "com.marcosserpa" "\0"
+            VALUE "FileDescription", "fuel_calculator" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "hello_world_flutter" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "hello_world_flutter.exe" "\0"
-            VALUE "ProductName", "hello_world_flutter" "\0"
+            VALUE "InternalName", "fuel_calculator" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2025 Marcos Serpa. All rights reserved." "\0"
+            VALUE "OriginalFilename", "fuel_calculator.exe" "\0"
+            VALUE "ProductName", "fuel_calculator" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
