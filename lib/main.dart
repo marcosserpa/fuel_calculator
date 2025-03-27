@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_masked_text2/flutter_masked_text2.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 // Reference calculation:
 // 100 km - 23L gasolina | 32L etanol
@@ -63,11 +64,80 @@ class _InputScreenState extends State<InputScreen> {
   String? _gasolineFormatted;
   String? _cheaperFuel;
   String? _ratioFormatted;
+  BannerAd? _bannerAd;
+  bool _isAdLoaded = false;
 
   @override
   void initState() {
     super.initState();
     _loadDefaultText();
+    _initAdMob();
+  }
+
+  void _initAdMob() {
+    MobileAds.instance.initialize().then((InitializationStatus status) {
+      _loadBannerAd();
+    });
+  }
+
+  void _loadBannerAd() {
+    _bannerAd = BannerAd(
+      adUnitId: 'ca-app-pub-3940256099942544/6300978111', // Test ad unit ID
+      size: AdSize.mediumRectangle, // Using medium rectangle for better visibility
+      request: AdRequest(
+        keywords: [
+           'promoção',
+          'desconto',
+          'oferta',
+          'black friday',
+          'cyber monday',
+          'mercado livre',
+          'amazon',
+          'magalu',
+          'americanas',
+          'casas bahia',
+          'ponto frio',
+          'extra',
+          'shopping',
+          'compras online',
+          'descontos',
+          'cupom de desconto',
+          'cashback',
+          'frete grátis',
+          'parcelamento',
+          'cartão de crédito',
+          'cartão de débito',
+          'pix',
+          'boleto',
+          'entrega rápida',
+          'entrega grátis',
+          'cashback',
+          'cashback',
+          'cashback',
+          'cashback',
+          'cashback',
+        ],
+        contentUrl: 'https://www.google.com/search?q=calculadora+combustível+gasolina+etanol',
+      ),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          setState(() {
+            _isAdLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+          print('Ad failed to load: $error');
+        },
+      ),
+    );
+    _bannerAd?.load();
+  }
+
+  @override
+  void dispose() {
+    _bannerAd?.dispose();
+    super.dispose();
   }
 
   Future<void> _loadDefaultText() async {
@@ -177,51 +247,68 @@ class _InputScreenState extends State<InputScreen> {
       appBar: AppBar(
         title: const Text('Calculadora de Combustível'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            if (_resultText != null) ...[
-              Text(
-                _resultText!,
-                style: const TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 20),
-            ] else if (_defaultText != null) ...[
-              RichText(
-                text: TextSpan(
-                  style: const TextStyle(fontSize: 16, color: Colors.black),
-                  children: [
-                    TextSpan(text: 'Baseado na última vez que você atualizou o consumo com Etanol '),
-                    _formatText(_etanolFormatted!, Colors.red),
-                    TextSpan(text: ' Km/l e Gasolina '),
-                    _formatText(_gasolineFormatted!, Colors.red),
-                    TextSpan(text: ' Km/l, é mais vantajoso abastecer com '),
-                    _formatText(_cheaperFuel!, Colors.green),
-                    TextSpan(text: ' se o valor do(a) '),
-                    _formatText(_cheaperFuel!, Colors.green),
-                    TextSpan(text: ' estiver abaixo de R\$ '),
-                    _formatText(_ratioFormatted!, Colors.black),
-                    TextSpan(text: ' o valor do litro'),
-                    TextSpan(text: '.\n\nClique abaixo para calcular informando o custo '),
-                    TextSpan(text: _cheaperFuel == 'Etanol' ? 'do Etanol' : 'da Gasolina'),
-                    TextSpan(text: ':'),
+      body: Column(
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  if (_resultText != null) ...[
+                    Text(
+                      _resultText!,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 20),
+                  ] else if (_defaultText != null) ...[
+                    RichText(
+                      text: TextSpan(
+                        style: const TextStyle(fontSize: 16, color: Colors.black),
+                        children: [
+                          TextSpan(text: 'Baseado na última vez que você atualizou o consumo com Etanol '),
+                          _formatText(_etanolFormatted!, Colors.red),
+                          TextSpan(text: ' Km/l e Gasolina '),
+                          _formatText(_gasolineFormatted!, Colors.red),
+                          TextSpan(text: ' Km/l, é mais vantajoso abastecer com '),
+                          _formatText(_cheaperFuel!, Colors.green),
+                          TextSpan(text: ' se o valor do(a) '),
+                          _formatText(_cheaperFuel!, Colors.green),
+                          TextSpan(text: ' estiver abaixo de R\$ '),
+                          _formatText(_ratioFormatted!, Colors.black),
+                          TextSpan(text: ' o valor do litro'),
+                          TextSpan(text: '.\n\nClique abaixo para calcular informando o custo '),
+                          TextSpan(text: _cheaperFuel == 'Etanol' ? 'do Etanol' : 'da Gasolina'),
+                          TextSpan(text: ':'),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                   ],
+                  ElevatedButton(
+                    onPressed: _calculate,
+                    child: const Text('Calcular'),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: _showConsumoScreen,
+                    child: const Text('Consumo'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_isAdLoaded && _bannerAd != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Center(
+                child: Container(
+                  width: _bannerAd!.size.width.toDouble(),
+                  height: _bannerAd!.size.height.toDouble(),
+                  child: AdWidget(ad: _bannerAd!),
                 ),
               ),
-              const SizedBox(height: 20),
-            ],
-            ElevatedButton(
-              onPressed: _calculate,
-              child: const Text('Calcular'),
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _showConsumoScreen,
-              child: const Text('Consumo'),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }
